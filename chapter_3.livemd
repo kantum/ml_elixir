@@ -1,0 +1,112 @@
+<!-- livebook:{"file_entries":[{"file":{"file_system_id":"local","file_system_type":"local","path":"/Users/kantum/Downloads/IMG_1065.jpeg"},"name":"IMG_1065.jpeg","type":"file"}]} -->
+
+# Untitled notebook
+
+```elixir
+Mix.install([
+  {:nx, "~> 0.9"},
+  {:exla, "~> 0.9"},
+  {:kino, "~> 0.14.2"},
+  {:stb_image, "~> 0.6.9"},
+  {:vega_lite, "~> 0.1.11"},
+  {:kino_vega_lite, "~> 0.1.13"}
+])
+```
+
+## Speaking the Language of Data
+
+```elixir
+Nx.default_backend(EXLA.Backend)
+```
+
+```elixir
+a = Nx.tensor([1, 2, 3])
+b = Nx.tensor([4.0, 5.0, 6.0])
+c = Nx.tensor([1,0,1], type: {:u, 8})
+
+IO.inspect(a, label: :a)
+IO.inspect(b, label: :b)
+IO.inspect(c, label: :c)
+nil
+```
+
+```elixir
+goog_current_price = 2677.32
+goog_pe = 23.86
+goog_mkt_cap = 1760
+
+meta_current_price = 133.93
+meta_pe = 11.10
+meta_mkt_cap = 360
+
+stocks_matrix =
+  Nx.tensor([
+    [goog_current_price, goog_pe, goog_mkt_cap],
+    [meta_current_price, meta_pe, meta_mkt_cap]
+    
+  ])
+
+IO.inspect(stocks_matrix)
+
+nil
+```
+
+## Scalar Multiplication
+
+```elixir
+sales_day_1 = Nx.tensor([32, 10, 14])
+sales_day_2 = Nx.tensor([10, 24, 21])
+total_sales = Nx.add(sales_day_1, sales_day_2)
+
+keep_rate = 0.9
+
+unreturned_sales = Nx.multiply(keep_rate, total_sales)
+
+price_per_product = Nx.tensor([9.95, 10.95, 5.99])
+revenue_per_product = Nx.multiply(unreturned_sales, price_per_product)
+```
+
+## Transpose
+
+```elixir
+sales_matrix = Nx.tensor([
+  [32, 10, 14],
+  [10, 24, 21]
+])
+
+Nx.transpose(sales_matrix)
+```
+
+## Linear Transformation
+
+```elixir
+invert_color_channels =
+  Nx.tensor([
+    [-1, 0, 0],
+    [0, -1, 0],
+    [0, 0, -1]
+  ])
+
+"/Users/kantum/Downloads/IMG_1065.jpeg"
+|> StbImage.read_file!()
+# |> StbImage.resize(256,256)
+|> StbImage.to_nx()
+|> Nx.dot(invert_color_channels)
+|> Nx.as_type({:u, 8})
+|> Kino.Image.new()
+```
+
+```elixir
+vector = Nx.dot(Nx.tensor([1,2,3]), Nx.tensor([1,2,3]))
+vector_matrix = Nx.dot(Nx.tensor([1,2]), Nx.tensor([[1],[2]]))
+matrix_matrix = Nx.dot(Nx.tensor([[1, 2]]), Nx.tensor([[3],[4]]))
+
+vector |> IO.inspect(label: :vector)
+vector_matrix |> IO.inspect(label: :vector_matrix)
+matrix_matrix |> IO.inspect(label: :matrix_matrix)
+nil
+```
+
+## Section
+
+<!-- livebook:{"offset":2133,"stamp":{"token":"XCP.I3kO8hh3LHqUL8RG1Bdc-fwVv4iCLiSfj7VAoypzHZroM2zHadfgsxxtiARdUP1wVx9tcSPfJ0-gEdq86IfaCTG7pFPopHAlvgpj0w","version":2}} -->
