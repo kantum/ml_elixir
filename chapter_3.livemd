@@ -107,6 +107,113 @@ matrix_matrix |> IO.inspect(label: :matrix_matrix)
 nil
 ```
 
-## Section
+## Reasoning About Uncertainty
 
-<!-- livebook:{"offset":2133,"stamp":{"token":"XCP.I3kO8hh3LHqUL8RG1Bdc-fwVv4iCLiSfj7VAoypzHZroM2zHadfgsxxtiARdUP1wVx9tcSPfJ0-gEdq86IfaCTG7pFPopHAlvgpj0w","version":2}} -->
+```elixir
+simulation = fn key ->
+  {value, key} = Nx.Random.uniform(key)
+  if Nx.to_number(value) < 0.5, do: {0, key}, else: {1, key}
+end
+
+key = Nx.Random.key(1709)
+
+for n <- [10, 100, 1000] do
+  Enum.map_reduce(1..n, key, fn _, key -> simulation.(key) end)
+  |> elem(0)
+  |> Enum.sum()
+  |> IO.inspect()
+end
+```
+
+## Understanding Differentiation
+
+```elixir
+defmodule BerryFarm do
+  import Nx.Defn
+
+  defn profits(trees) do
+    trees
+    |> Nx.subtract(1)
+    |> Nx.pow(4)
+    |> Nx.negate()
+    |> Nx.add(Nx.pow(trees, 3))
+    |> Nx.add(Nx.pow(trees, 2))
+  end
+
+  defn profits_derivative(trees) do
+    grad(trees, &profits/1)
+  end
+end
+
+```
+
+```elixir
+trees = Nx.linspace(0, 4, n: 100)
+
+profits = BerryFarm.profits(trees)
+
+alias VegaLite, as: Vl
+
+Vl.new(title: "Berry Profits", width: 1440, height: 1080)
+|> Vl.data_from_values(%{
+  trees: Nx.to_flat_list(trees),
+  profits: Nx.to_flat_list(profits)
+})
+|> Vl.mark(:line, interpolate: :basis)
+|> Vl.encode_field(:x, "trees", type: :quantitative)
+|> Vl.encode_field(:y, "profits", type: :quantitative)
+```
+
+```elixir
+trees = Nx.linspace(0, 3, n: 100)
+profits = BerryFarm.profits(trees)
+profits_derivative = BerryFarm.profits_derivative(trees)
+
+alias VegaLite, as: Vl
+
+title = "Berry Profits and Profits Rate of Change"
+
+Vl.new(title: title, width: 1440, height: 1080)
+|> Vl.data_from_values(%{
+  trees: Nx.to_flat_list(trees),
+  profits: Nx.to_flat_list(profits),
+  profits_derivative: Nx.to_flat_list(profits_derivative)
+})
+|> Vl.layers([
+  Vl.new()
+  |> Vl.mark(:line, interpolate: :basis)
+  |> Vl.encode_field(:x, "trees", type: :quantitative)
+  |> Vl.encode_field(:y, "profits", type: :quantitative),
+  Vl.new()
+  |> Vl.mark(:line, interpolate: :basis)
+  |> Vl.encode_field(:x, "trees", type: :quantitative)
+  |> Vl.encode_field(:y, "profits_derivative", type: :quantitative)
+  |> Vl.encode(:color, value: "#ff0000")
+])
+```
+
+## Automatic Differentiation with defn
+
+```elixir
+defmodule GradFun do
+  import Nx.Defn
+
+  defn my_function(x) do
+    x
+    |> Nx.cos()
+    |> Nx.exp()
+    |> Nx.sum()
+    |> print_expr()
+  end
+
+  defn grad_my_function(x) do
+    grad(x, &my_function/1) |> print_expr()
+  end
+end
+```
+
+```elixir
+GradFun.grad_my_function(Nx.tensor([1.0,2.0,3.0]))
+```
+
+<!-- livebook:{"offset":4381,"stamp":{"token":"XCP.4gYoP9ZzgfAkjeE2sXNkhXDsHP4iT2bg13Mwt-kHbiiwG4Dou8nbsfrfOGJaZmPeY5Gas6i09WsED6I_PXdGj90KsJnNPPkYAH_OHg","version":2}} -->
